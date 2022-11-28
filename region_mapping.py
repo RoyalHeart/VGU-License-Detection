@@ -1,3 +1,4 @@
+# use region mapping dictionary
 region_mapping = {
     "11": "Cao Bằng",
     "12": "Lạng Sơn",
@@ -157,3 +158,11 @@ region_mapping_no_accents = {
     "98": "Bac Giang",
     "99": "Bac Ninh",
 }
+
+
+def getRegionNoAccents(regionNumber):
+    return region_mapping_no_accents[regionNumber]
+
+
+def getRegionWithAccents(regionNumber):
+    return region_mapping[regionNumber]

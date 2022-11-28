@@ -1,24 +1,22 @@
-from region_mapping import region_mapping_no_accents as region_mapping
-import matplotlib.pyplot as plt
+from region_mapping import getRegionNoAccents
+import regular_expression as re
 import cv2
-import os
 import torch
-import easyocr
-import re
+import ocr
 import pandas as pd
-import pyautogui
 import numpy as np
+# import argparse
+# parser = argparse.ArgumentParser()
 
+# # -db DATABSE -u USERNAME -p PASSWORD -size 20
+# parser.add_argument(
+#     "-i", "--input", help="Type of input 0: camera, 1: ipCamera, 2: image/video source", type=int)
 
-def detect_dash(input_text: str):
-    pattern = re.compile(r".*-")
-    return pattern.match(input_text)
+# args = parser.parse_args()
 
-
-def detect_alphabet(input_text: str):
-    pattern = re.compile(r"\d\d[a-zA-Z]")
-    return pattern.match(input_text)
-
+# print("Input {}".format(
+#     args.input | 0,
+# ))
 
 print(cv2.__version__)
 print(torch.cuda.is_available())
@@ -28,44 +26,33 @@ model = torch.hub.load(
     "ultralytics/yolov5",
     model="custom",
     source="github",
-    path="./license_4146_50.pt",
+    path="./license_4146_50_l.pt",
 )
 
 
-# Images
-# or file, Path, PIL, OpenCV, numpy, list
-# img = 'https://ultralytics.com/images/zidane.jpg'
-# pathToTestImage = './license/test/'
-# pathToDetectImage = './runs/detect/exp/crops/license/'
-# imgs = [pathToTestImage +
-#         file for file in os.listdir(pathToTestImage)]
-
-reader = easyocr.Reader(["vi"])
-
-
-def ocrAndRegionMappingFrame(license_crop, edited_frame, xmin, ymin):
-    result = reader.readtext(license_crop)
-    for i in range(len(result)):
+def regionMappingFrame(ocrResults, frame, xmin, ymin):
+    for i in range(len(ocrResults)):
         # print(f"{i} : {result[i][1]}")
-        if detect_dash(result[i][1]) or detect_alphabet(result[i][1]):
-            region_line = result[i][1][0:2]
-            # use region mapping dictionary
+        ocrText = ocrResults[i][1]
+        if re.detect_dash(ocrText) or re.detect_alphabet(ocrText):
+            region_number = ocrText[0:2]
             try:
+                region = getRegionNoAccents(region_number)
                 cv2.putText(
-                    edited_frame,
-                    region_mapping[region_line],
+                    frame,
+                    region,
                     (xmin, ymin - 10),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.9,
                     (36, 255, 12),
                     2,
                 )
-                # print(f"region : {region_mapping[region_line]}")
             except KeyError:
                 print("region not found")
 
 
-def showLicenseRegionOnFrame(results, frame):
+def showLicenseRegionOnFrame(results, frame: np.ndarray):
+    print(type(frame))
     df = results.pandas().xyxy
     edited_frame = frame
     if not (df[0].empty):
@@ -80,19 +67,17 @@ def showLicenseRegionOnFrame(results, frame):
                 edited_frame = cv2.rectangle(
                     edited_frame, (xmin, ymin), (xmax, ymax), (36, 255, 12), 1
                 )
-                ocrAndRegionMappingFrame(
-                    license_crop, edited_frame, xmin, ymin)
+                ocrResults = ocr.getTextFromImage(license_crop)
+                regionMappingFrame(
+                    ocrResults, edited_frame, xmin, ymin)
             except:
                 print("Type error")
     cv2.imshow("edited frame", edited_frame)
 
 
-img = pyautogui.screenshot()
-img = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
-
-
 def detect_ocr_video(vidcap):
     success, frame = vidcap.read()
+    print(type(frame))
     count = 0
     while success:
         # vidcap.set(cv2.CAP_PROP_POS_MSEC, (count * 1000))
@@ -103,6 +88,12 @@ def detect_ocr_video(vidcap):
         showLicenseRegionOnFrame(results, frame)
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
+
+
+def detect_ocr_image(image):
+    results = model(image)
+    model.iou = 0.1
+    showLicenseRegionOnFrame(results, image)
 
 
 username = "hoangtam"
@@ -121,4 +112,5 @@ def main():
     cv2.destroyAllWindows()
 
 
-main()
+if __name__ == '__main__':
+    main()
