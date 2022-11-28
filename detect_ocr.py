@@ -1,3 +1,4 @@
+from region_mapping import region_mapping_no_accents as region_mapping
 import matplotlib.pyplot as plt
 import cv2
 import os
@@ -5,8 +6,8 @@ import torch
 import easyocr
 import re
 import pandas as pd
-
-from region_mapping import region_mapping_no_accents as region_mapping
+import pyautogui
+import numpy as np
 
 
 def detect_dash(input_text: str):
@@ -42,7 +43,29 @@ model = torch.hub.load(
 reader = easyocr.Reader(["vi"])
 
 
-def showLicenseOnFrame(results, frame):
+def ocrAndRegionMappingFrame(license_crop, edited_frame, xmin, ymin):
+    result = reader.readtext(license_crop)
+    for i in range(len(result)):
+        # print(f"{i} : {result[i][1]}")
+        if detect_dash(result[i][1]) or detect_alphabet(result[i][1]):
+            region_line = result[i][1][0:2]
+            # use region mapping dictionary
+            try:
+                cv2.putText(
+                    edited_frame,
+                    region_mapping[region_line],
+                    (xmin, ymin - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.9,
+                    (36, 255, 12),
+                    2,
+                )
+                # print(f"region : {region_mapping[region_line]}")
+            except KeyError:
+                print("region not found")
+
+
+def showLicenseRegionOnFrame(results, frame):
     df = results.pandas().xyxy
     edited_frame = frame
     if not (df[0].empty):
@@ -54,77 +77,48 @@ def showLicenseOnFrame(results, frame):
                 xmin = round(float(pd.to_numeric(licenses.xmin[i])))
                 xmax = round(float(pd.to_numeric(licenses.xmax[i])))
                 license_crop = frame[ymin:ymax, xmin:xmax]
-                result = reader.readtext(license_crop)
                 edited_frame = cv2.rectangle(
                     edited_frame, (xmin, ymin), (xmax, ymax), (36, 255, 12), 1
                 )
-                for i in range(len(result)):
-                    print(f"{i} : {result[i][1]}")
-                    if detect_dash(result[i][1]) or detect_alphabet(result[i][1]):
-                        region_line = result[i][1][0:2]
-                        # use region mapping dictionary
-                        try:
-                            cv2.putText(
-                                edited_frame,
-                                region_mapping[region_line],
-                                (xmin, ymin - 10),
-                                cv2.FONT_HERSHEY_SIMPLEX,
-                                0.9,
-                                (36, 255, 12),
-                                2,
-                            )
-                            print(f"region : {region_mapping[region_line]}")
-                        except KeyError:
-                            print("region not found")
+                ocrAndRegionMappingFrame(
+                    license_crop, edited_frame, xmin, ymin)
             except:
                 print("Type error")
-        cv2.imshow("edited frame", edited_frame)
+    cv2.imshow("edited frame", edited_frame)
+
+
+img = pyautogui.screenshot()
+img = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+
+
+def detect_ocr_video(vidcap):
+    success, frame = vidcap.read()
+    count = 0
+    while success:
+        # vidcap.set(cv2.CAP_PROP_POS_MSEC, (count * 1000))
+        success, frame = vidcap.read()
+        count += 1
+        model.iou = 0.1
+        results = model(frame)
+        showLicenseRegionOnFrame(results, frame)
+        if cv2.waitKey(1) & 0xFF == ord("q"):
+            break
 
 
 username = "hoangtam"
 password = "vgulicensedetection"
-port = "192.168.1.3:8080"
-vidcap = cv2.VideoCapture(f"https://{username}:{password}@{port}/video")
+port = "172.16.128.209:8080"
+ipCameraAddress = f"https://{username}:{password}@{port}/video"
+vidcap = cv2.VideoCapture(ipCameraAddress)
 video_path = "./OUTFILE.mp4"
+# vidcap = cv2.VideoCapture(video_path)
 # vidcap = cv2.VideoCapture(0)
-success, frame = vidcap.read()
-count = 0
-while True:
-    vidcap.set(cv2.CAP_PROP_POS_MSEC, (count * 1000))
-    success, frame = vidcap.read()
-    count += 1
-    if cv2.waitKey(1) & 0xFF == ord("q"):
-        break
-    model.iou = 0.1
-    results = model(frame)
-    showLicenseOnFrame(results, frame)
 
-# Exit and distroy all windows
-cv2.destroyAllWindows()
 
-# # Results
-# model.iou = 0.1
-# results = model("./license/test/21.jpg")
-# results.print()  # or .show(), .save(), .crop(), .pandas(), etc.
-# # results.show()
-# # results.crop(save=True)
-# # increase crop size
+def main():
+    detect_ocr_video(vidcap)
+    # Exit and distroy all windows
+    cv2.destroyAllWindows()
 
-# df = results.pandas().xyxy
-# print(len(df[0].xmin))
-# print(df[0].confidence)
 
-# reader = easyocr.Reader(["vi"])
-# for fileName in os.listdir(pathToDetectImage):
-#     result = reader.readtext(pathToDetectImage + fileName)
-#     print(f"file name {fileName}")
-#     print(f"size {len(result)}")
-#     for i in range(len(result)):
-#         print(f"{i} : {result[i][1]}")
-#         if detect_dash(result[i][1]) or detect_alphabet(result[i][1]):
-#             region_line = result[i][1][0:2]
-#             # use region mapping dictionary
-#             try:
-#                 print(f"region : {region_mapping[region_line]}")
-#             except KeyError:
-#                 print("region not found")
+main()
