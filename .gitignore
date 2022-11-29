@@ -12,3 +12,5 @@ report/main.pdf
 report/main.synctex.gz
 report/main.toc
 .session.vim
+__pycache__
+__pycache__

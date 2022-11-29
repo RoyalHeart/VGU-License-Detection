@@ -1,0 +1,8 @@
+pandas
+easyocr
+tqdm
+matplotlib
+seaborn
+opencv-python
+numpy
+torch

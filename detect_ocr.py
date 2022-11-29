@@ -1,5 +1,4 @@
 from region_mapping import getRegionNoAccents
-from timing import timing
 import regular_expression as re
 import cv2
 import torch
@@ -15,7 +14,7 @@ import numpy as np
 
 # args = parser.parse_args()
 
-# print("Input {} Source {}".format(
+# print("Input {}".format(
 #     args.input | 0,
 # ))
 
@@ -53,6 +52,7 @@ def regionMappingFrame(ocrResults, frame, xmin, ymin):
 
 
 def showLicenseRegionOnFrame(results, frame: np.ndarray):
+    # print(type(frame))
     df = results.pandas().xyxy
     edited_frame = frame
     if not (df[0].empty):
@@ -79,7 +79,7 @@ def detect_ocr_video(vidcap):
     success, frame = vidcap.read()
     count = 0
     while success:
-        # vidcap.set(cv2.CAP_PROP_POS_MSEC, (count * 1000))
+        vidcap.set(cv2.CAP_PROP_POS_MSEC, (count * 1000))
         success, frame = vidcap.read()
         count += 1
         model.iou = 0.1
@@ -89,17 +89,16 @@ def detect_ocr_video(vidcap):
             break
 
 
-def detect_ocr_image(image: np.ndarray):
+def detect_ocr_image(image):
     results = model(image)
     model.iou = 0.1
-    results.save()
-    timing(showLicenseRegionOnFrame, results, image)
+    showLicenseRegionOnFrame(results, image)
 
 
-username = "hoangtam"
-password = "vgulicensedetection"
-port = "172.16.128.209:8080"
-ipCameraAddress = f"https://{username}:{password}@{port}/video"
+# username = "hoangtam"
+# password = "vgulicensedetection"
+# port = "172.16.128.209:8080"
+# ipCameraAddress = f"https://{username}:{password}@{port}/video"
 # vidcap = cv2.VideoCapture(ipCameraAddress)
 video_path = "./OUTFILE.mp4"
 vidcap = cv2.VideoCapture(video_path)
@@ -108,10 +107,6 @@ vidcap = cv2.VideoCapture(video_path)
 
 def main():
     detect_ocr_video(vidcap)
-    # start_time = time.time()
-    # detect_ocr_image(cv2.cvtColor(cv2.imread(
-    # "./license/test/24.jpg"), cv2.COLOR_BGR2RGB))
-    # print("Time:", round(time.time() - start_time, 3))
     # Exit and distroy all windows
     cv2.destroyAllWindows()
 
