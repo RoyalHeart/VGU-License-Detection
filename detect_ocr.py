@@ -1,4 +1,5 @@
 from region_mapping import getRegionNoAccents
+from timing import timing
 import regular_expression as re
 import cv2
 import torch
@@ -116,7 +117,7 @@ def detectLicense(dir):
 
 
 def main():
-    detectLicense("./license/validation/")
+    timing(detectLicense, "./license/validation/")
     # detect_ocr_video(vidcap)
     # detect_ocr_image(cv2.cvtColor(cv2.imread(
     # "./license/test/24.jpg"), cv2.COLOR_BGR2RGB))
