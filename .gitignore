@@ -1,2 +1,14 @@
 runs/detect/exp/crops/license
 runs/detect
+report/chapters/.session.vim
+report/main.aux
+report/main.bbl
+report/main.blg
+report/main.fdb_latexmk
+report/main.fls
+report/main.log
+report/main.out
+report/main.pdf
+report/main.synctex.gz
+report/main.toc
+.session.vim

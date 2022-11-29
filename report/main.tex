@@ -1,0 +1,52 @@
+\documentclass[12pt, a4paper, twoside, table, xcdraw]{report}
+% \documentclass[final]{cvpr}
+
+%% Language and font encodings
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc} % \usepackage{svg} \usepackage{listings}
+\usepackage{textcomp}
+\usepackage{longtable}
+\usepackage{multirow}
+% \usepackage{titlesec}
+% \titleformat{\chapter}{}{}{0em}{\bf\LARGE}
+
+
+% \usepackage[spaces,hyphens]{url}
+
+
+\usepackage[normalem]{ulem}
+\useunder{\uline}{\ul}{}
+
+
+\usepackage{graphicx}
+% \usepackage[table,xcdraw]{xcolor}
+% If you use beamer only pass "xcolor=table" option, i.e. \documentclass[xcolor=table]{beamer}
+\usepackage{lscape}
+
+%% Sets page size and margins
+\usepackage[a4paper,top=3cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+
+%% Useful packages
+\usepackage{amsmath}
+\usepackage[colorinlistoftodos]{todonotes}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+
+\title{Title}
+\author{Group Berlin}
+
+\begin{document}
+
+\input{title/title.tex}
+
+\tableofcontents
+
+\input{chapters/introduction.tex}
+\input{chapters/methodology.tex}
+
+{\small
+\bibliographystyle{ieee_fullname}
+\bibliography{./ref.bib}
+}
+
+\end{document}
