@@ -84,9 +84,7 @@ def detect_ocr_video(vidcap):
         count += 1
         model.iou = 0.1
         results = model(frame)
-        start_time = time.time()
         showLicenseRegionOnFrame(results, frame)
-        print("Time: " + str(round(time.time() - start_time, 3)) + "s")
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
 
@@ -102,17 +100,17 @@ username = "hoangtam"
 password = "vgulicensedetection"
 port = "172.16.128.209:8080"
 ipCameraAddress = f"https://{username}:{password}@{port}/video"
-vidcap = cv2.VideoCapture(ipCameraAddress)
+# vidcap = cv2.VideoCapture(ipCameraAddress)
 video_path = "./OUTFILE.mp4"
-# vidcap = cv2.VideoCapture(video_path)
+vidcap = cv2.VideoCapture(video_path)
 # vidcap = cv2.VideoCapture(0)
 
 
 def main():
-    # detect_ocr_video(vidcap)
+    detect_ocr_video(vidcap)
     # start_time = time.time()
-    detect_ocr_image(cv2.cvtColor(cv2.imread(
-        "./license/test/24.jpg"), cv2.COLOR_BGR2RGB))
+    # detect_ocr_image(cv2.cvtColor(cv2.imread(
+    # "./license/test/24.jpg"), cv2.COLOR_BGR2RGB))
     # print("Time:", round(time.time() - start_time, 3))
     # Exit and distroy all windows
     cv2.destroyAllWindows()
