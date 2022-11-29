@@ -1,4 +1,5 @@
 from region_mapping import getRegionNoAccents
+from timing import timing
 import regular_expression as re
 import cv2
 import torch
@@ -14,7 +15,7 @@ import numpy as np
 
 # args = parser.parse_args()
 
-# print("Input {}".format(
+# print("Input {} Source {}".format(
 #     args.input | 0,
 # ))
 
@@ -52,7 +53,6 @@ def regionMappingFrame(ocrResults, frame, xmin, ymin):
 
 
 def showLicenseRegionOnFrame(results, frame: np.ndarray):
-    print(type(frame))
     df = results.pandas().xyxy
     edited_frame = frame
     if not (df[0].empty):
@@ -77,7 +77,6 @@ def showLicenseRegionOnFrame(results, frame: np.ndarray):
 
 def detect_ocr_video(vidcap):
     success, frame = vidcap.read()
-    print(type(frame))
     count = 0
     while success:
         # vidcap.set(cv2.CAP_PROP_POS_MSEC, (count * 1000))
@@ -85,15 +84,18 @@ def detect_ocr_video(vidcap):
         count += 1
         model.iou = 0.1
         results = model(frame)
+        start_time = time.time()
         showLicenseRegionOnFrame(results, frame)
+        print("Time: " + str(round(time.time() - start_time, 3)) + "s")
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
 
 
-def detect_ocr_image(image):
+def detect_ocr_image(image: np.ndarray):
     results = model(image)
     model.iou = 0.1
-    showLicenseRegionOnFrame(results, image)
+    results.save()
+    timing(showLicenseRegionOnFrame, results, image)
 
 
 username = "hoangtam"
@@ -107,7 +109,11 @@ video_path = "./OUTFILE.mp4"
 
 
 def main():
-    detect_ocr_video(vidcap)
+    # detect_ocr_video(vidcap)
+    # start_time = time.time()
+    detect_ocr_image(cv2.cvtColor(cv2.imread(
+        "./license/test/24.jpg"), cv2.COLOR_BGR2RGB))
+    # print("Time:", round(time.time() - start_time, 3))
     # Exit and distroy all windows
     cv2.destroyAllWindows()
 
