@@ -3,6 +3,7 @@ import regular_expression as re
 import cv2
 import torch
 import ocr
+import os
 import pandas as pd
 import numpy as np
 # import argparse
@@ -105,8 +106,20 @@ vidcap = cv2.VideoCapture(video_path)
 # vidcap = cv2.VideoCapture(0)
 
 
+def detectLicense(dir):
+    imgs = []
+    for i in os.listdir(dir):
+        imgs.append(dir + i)
+    results = model(imgs)
+    results.save()
+    return results
+
+
 def main():
-    detect_ocr_video(vidcap)
+    detectLicense("./license/validation/")
+    # detect_ocr_video(vidcap)
+    # detect_ocr_image(cv2.cvtColor(cv2.imread(
+    # "./license/test/24.jpg"), cv2.COLOR_BGR2RGB))
     # Exit and distroy all windows
     cv2.destroyAllWindows()
 
