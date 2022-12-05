@@ -124,8 +124,8 @@ def detectLicense(dir):
 
 
 def main():
-    timing(detectLicense, "./license/validation/")
-    # detect_ocr_video(vidcap, 10)
+    timing(detectLicense, "./license/validation/image/")
+    # detect_ocr_video(vidcap)
     # detect_ocr_image(cv2.cvtColor(cv2.imread(
     # "./license/test/24.jpg"), cv2.COLOR_BGR2RGB))
     # Exit and distroy all windows
