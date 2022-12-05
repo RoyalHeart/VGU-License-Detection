@@ -5,6 +5,7 @@ import module.ocr as ocr
 import cv2
 import torch
 import os
+import time
 import pandas as pd
 import numpy as np
 # import argparse
@@ -79,16 +80,19 @@ def showLicenseRegionOnFrame(results, frame: np.ndarray):
     cv2.imshow("edited frame", edited_frame)
 
 
-def detect_ocr_video(vidcap):
+def detect_ocr_video(vidcap, frame_rate=30):
     success, frame = vidcap.read()
     count = 0
+    prev = 0
     while success:
-        # vidcap.set(cv2.CAP_PROP_POS_MSEC, (count * 1000))
+        time_elapsed = time.time() - prev
         success, frame = vidcap.read()
-        count += 1
-        model.iou = 0.1
-        results = model(frame)
-        showLicenseRegionOnFrame(results, frame)
+        if time_elapsed > 1./frame_rate:
+            prev = time.time()
+            count += 1
+            model.iou = 0.1
+            results = model(frame)
+            timing(showLicenseRegionOnFrame, results, frame)
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
 
@@ -104,8 +108,8 @@ password = "vgulicensedetection"
 port = "172.16.129.39:8080"
 ipCameraAddress = f"https://{username}:{password}@{port}/video"
 vidcap = cv2.VideoCapture(ipCameraAddress)
-# video_path = "./OUTFILE.mp4"
-# vidcap = cv2.VideoCapture(video_path)
+video_path = "./OUTFILE.mp4"
+vidcap = cv2.VideoCapture(video_path)
 # vidcap = cv2.VideoCapture(0)
 
 
@@ -115,12 +119,13 @@ def detectLicense(dir):
         imgs.append(dir + i)
     results = model(imgs)
     results.save()
+    print(results.pandas().xyxy[0])
     return results
 
 
 def main():
-    # timing(detectLicense, "./license/validation/")
-    detect_ocr_video(vidcap)
+    timing(detectLicense, "./license/validation/")
+    # detect_ocr_video(vidcap, 10)
     # detect_ocr_image(cv2.cvtColor(cv2.imread(
     # "./license/test/24.jpg"), cv2.COLOR_BGR2RGB))
     # Exit and distroy all windows
