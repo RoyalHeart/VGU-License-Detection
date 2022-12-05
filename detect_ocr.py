@@ -29,7 +29,7 @@ model = torch.hub.load(
     "ultralytics/yolov5",
     model="custom",
     source="github",
-    path="./license_4146_50_l.pt",
+    path="./license_4146_50_s.pt",
 )
 
 
@@ -42,6 +42,10 @@ def putTextOnFrame(frame, text, x, y):
                 (36, 255, 12),
                 2,)
     return frame
+
+
+def saveImage(image, filename):
+    cv2.imwrite(filename, image)
 
 
 def regionMappingFrame(ocrResults, frame, xmin, ymin):
@@ -57,7 +61,7 @@ def regionMappingFrame(ocrResults, frame, xmin, ymin):
                 print("region not found")
 
 
-def showLicenseRegionOnFrame(results, frame: np.ndarray):
+def showLicenseRegionOnFrame(results, frame: np.ndarray, filename=None, isShow=True):
     df = results.pandas().xyxy
     edited_frame = frame
     if not (df[0].empty):
@@ -77,7 +81,13 @@ def showLicenseRegionOnFrame(results, frame: np.ndarray):
                     ocrResults, edited_frame, xmin, ymin)
             except:
                 print("Type error")
-    cv2.imshow("edited frame", edited_frame)
+    if (filename):
+        print("Save file")
+        print(filename)
+        cv2.imwrite(filename, cv2.cvtColor(
+            edited_frame, cv2.COLOR_BGR2RGB))
+    if (isShow):
+        cv2.imshow("edited frame", edited_frame)
 
 
 def detect_ocr_video(vidcap, frame_rate=30):
@@ -97,20 +107,15 @@ def detect_ocr_video(vidcap, frame_rate=30):
             break
 
 
-def detect_ocr_image(image):
+def detect_ocr_image(pathToImage, savePath=None):
+    image = cv2.cvtColor(cv2.imread(
+        pathToImage), cv2.COLOR_BGR2RGB)
     results = model(image)
     model.iou = 0.1
-    showLicenseRegionOnFrame(results, image)
-
-
-username = "hoangtam"
-password = "vgulicensedetection"
-port = "172.16.129.39:8080"
-ipCameraAddress = f"https://{username}:{password}@{port}/video"
-vidcap = cv2.VideoCapture(ipCameraAddress)
-video_path = "./OUTFILE.mp4"
-vidcap = cv2.VideoCapture(video_path)
-# vidcap = cv2.VideoCapture(0)
+    # results.save()
+    filename = savePath + "detected_" + os.path.basename(pathToImage)
+    print(filename)
+    showLicenseRegionOnFrame(results, image, filename, False)
 
 
 def detectLicense(dir):
@@ -119,15 +124,21 @@ def detectLicense(dir):
         imgs.append(dir + i)
     results = model(imgs)
     results.save()
-    print(results.pandas().xyxy[0])
     return results
 
 
 def main():
-    timing(detectLicense, "./license/validation/image/")
+    username = "hoangtam"
+    password = "vgulicensedetection"
+    port = "172.16.129.39:8080"
+    ipCameraAddress = f"https://{username}:{password}@{port}/video"
+    video_path = "./OUTFILE.mp4"
+    # vidcap = cv2.VideoCapture(ipCameraAddress)
+    # vidcap = cv2.VideoCapture(video_path)
+    # vidcap = cv2.VideoCapture(0)
+    # timing(detectLicense, "./license/test/")
     # detect_ocr_video(vidcap)
-    # detect_ocr_image(cv2.cvtColor(cv2.imread(
-    # "./license/test/24.jpg"), cv2.COLOR_BGR2RGB))
+    # detect_ocr_image("./upload_file/05.jpg", "./detected/")
     # Exit and distroy all windows
     cv2.destroyAllWindows()
 
