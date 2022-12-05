@@ -1,9 +1,9 @@
-from region_mapping import getRegionNoAccents
-from timing import timing
-import regular_expression as re
+from module.region_mapping import getRegionNoAccents
+from module.timing import timing
+import module.regular_expression as re
+import module.ocr as ocr
 import cv2
 import torch
-import ocr
 import os
 import pandas as pd
 import numpy as np
@@ -32,6 +32,17 @@ model = torch.hub.load(
 )
 
 
+def putTextOnFrame(frame, text, x, y):
+    cv2.putText(frame,
+                text,
+                (x, y - 10),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.9,
+                (36, 255, 12),
+                2,)
+    return frame
+
+
 def regionMappingFrame(ocrResults, frame, xmin, ymin):
     for i in range(len(ocrResults)):
         # print(f"{i} : {result[i][1]}")
@@ -40,21 +51,12 @@ def regionMappingFrame(ocrResults, frame, xmin, ymin):
             region_number = ocrText[0:2]
             try:
                 region = getRegionNoAccents(region_number)
-                cv2.putText(
-                    frame,
-                    region,
-                    (xmin, ymin - 10),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.9,
-                    (36, 255, 12),
-                    2,
-                )
+                frame = putTextOnFrame(frame, region, xmin, ymin)
             except KeyError:
                 print("region not found")
 
 
 def showLicenseRegionOnFrame(results, frame: np.ndarray):
-    # print(type(frame))
     df = results.pandas().xyxy
     edited_frame = frame
     if not (df[0].empty):
@@ -81,7 +83,7 @@ def detect_ocr_video(vidcap):
     success, frame = vidcap.read()
     count = 0
     while success:
-        vidcap.set(cv2.CAP_PROP_POS_MSEC, (count * 1000))
+        # vidcap.set(cv2.CAP_PROP_POS_MSEC, (count * 1000))
         success, frame = vidcap.read()
         count += 1
         model.iou = 0.1
@@ -97,13 +99,13 @@ def detect_ocr_image(image):
     showLicenseRegionOnFrame(results, image)
 
 
-# username = "hoangtam"
-# password = "vgulicensedetection"
-# port = "172.16.128.209:8080"
-# ipCameraAddress = f"https://{username}:{password}@{port}/video"
-# vidcap = cv2.VideoCapture(ipCameraAddress)
-video_path = "./OUTFILE.mp4"
-vidcap = cv2.VideoCapture(video_path)
+username = "hoangtam"
+password = "vgulicensedetection"
+port = "172.16.129.39:8080"
+ipCameraAddress = f"https://{username}:{password}@{port}/video"
+vidcap = cv2.VideoCapture(ipCameraAddress)
+# video_path = "./OUTFILE.mp4"
+# vidcap = cv2.VideoCapture(video_path)
 # vidcap = cv2.VideoCapture(0)
 
 
@@ -117,8 +119,8 @@ def detectLicense(dir):
 
 
 def main():
-    timing(detectLicense, "./license/validation/")
-    # detect_ocr_video(vidcap)
+    # timing(detectLicense, "./license/validation/")
+    detect_ocr_video(vidcap)
     # detect_ocr_image(cv2.cvtColor(cv2.imread(
     # "./license/test/24.jpg"), cv2.COLOR_BGR2RGB))
     # Exit and distroy all windows

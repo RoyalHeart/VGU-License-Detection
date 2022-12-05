@@ -1,3 +1,5 @@
+r"This ocr file using easyocr"
+
 import easyocr
 
 reader = easyocr.Reader(["vi"])
