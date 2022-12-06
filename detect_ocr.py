@@ -25,11 +25,23 @@ print(cv2.__version__)
 print(torch.cuda.is_available())
 # Model
 # or yolov5n - yolov5x6, custom
-model = torch.hub.load(
+modelSmall = torch.hub.load(
     "ultralytics/yolov5",
     model="custom",
     source="github",
     path="./license_4146_50_s.pt",
+)
+modelMedium = torch.hub.load(
+    "ultralytics/yolov5",
+    model="custom",
+    source="github",
+    path="./license_4146_50_m.pt",
+)
+modelLarge = torch.hub.load(
+    "ultralytics/yolov5",
+    model="custom",
+    source="github",
+    path="./license_4146_50_l.pt",
 )
 
 
@@ -90,14 +102,24 @@ def showLicenseRegionOnFrame(results, frame: np.ndarray, filename=None, isShow=T
         cv2.imshow("edited frame", edited_frame)
 
 
-def detect_ocr_video(vidcap, frame_rate=30):
+def detect_ocr_video(vidcap, modelType='small', frameRate=30):
     success, frame = vidcap.read()
     count = 0
     prev = 0
+    model = modelSmall
+    if (modelType == 'small'):
+        model = modelSmall
+        print("small")
+    elif (modelType == 'medium'):
+        model = modelMedium
+        print("medium")
+    elif (modelType == 'large'):
+        model = modelLarge
+        print("large")
     while success:
         time_elapsed = time.time() - prev
         success, frame = vidcap.read()
-        if time_elapsed > 1./frame_rate:
+        if time_elapsed > 1./frameRate:
             prev = time.time()
             count += 1
             model.iou = 0.1
@@ -107,13 +129,23 @@ def detect_ocr_video(vidcap, frame_rate=30):
             break
 
 
-def detect_ocr_image(pathToImage, savePath=None):
+def detect_ocr_image(pathToImage, modelType: str = 'small', savePath=None):
     image = cv2.cvtColor(cv2.imread(
         pathToImage), cv2.COLOR_BGR2RGB)
+    model = modelSmall
+    if (modelType == 'small'):
+        model = modelSmall
+    elif (modelType == 'medium'):
+        model = modelMedium
+    elif (modelType == 'large'):
+        model = modelLarge
+    else:
+        return Exception
     results = model(image)
     model.iou = 0.1
-    # results.save()
-    filename = savePath + "detected_" + os.path.basename(pathToImage)
+    filename = None
+    if (savePath):
+        filename = f'{savePath}detected_{modelType}_{os.path.basename(pathToImage)}'
     print(filename)
     showLicenseRegionOnFrame(results, image, filename, False)
 
@@ -122,7 +154,7 @@ def detectLicense(dir):
     imgs = []
     for i in os.listdir(dir):
         imgs.append(dir + i)
-    results = model(imgs)
+    results = modelSmall(imgs)
     results.save()
     return results
 
@@ -134,11 +166,12 @@ def main():
     ipCameraAddress = f"https://{username}:{password}@{port}/video"
     video_path = "./OUTFILE.mp4"
     # vidcap = cv2.VideoCapture(ipCameraAddress)
-    # vidcap = cv2.VideoCapture(video_path)
+    vidcap = cv2.VideoCapture(video_path)
     # vidcap = cv2.VideoCapture(0)
     # timing(detectLicense, "./license/test/")
-    # detect_ocr_video(vidcap)
-    # detect_ocr_image("./upload_file/05.jpg", "./detected/")
+    print('hi')
+    # detect_ocr_video(vidcap, 'medium', 10)
+    detect_ocr_image("./upload_file/03.jpg", 'medium', './static/medium/')
     # Exit and distroy all windows
     cv2.destroyAllWindows()
 

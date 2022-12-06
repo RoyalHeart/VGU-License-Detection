@@ -26,19 +26,7 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-@app.route('/', methods=['GET', 'POST'])
-def main_page():
-    return '''
-    <!doctype html>
-    <title>Flask website</title>
-    <h1>Welcome to VGU license detection website</h1>
-    <form action="/api">
-    <input type="submit" value="To API page"/>
-</form>
-    '''
-
-
-@app.route('/api', methods=['POST', 'GET'])
+@app.route('/', methods=['POST', 'GET'])
 def upload_file():
     print(request.method)
     if request.method == 'GET':
@@ -72,24 +60,49 @@ def upload_file():
             filename = secure_filename(file.filename)
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             detect_ocr_image(app.config['UPLOAD_FOLDER'] +
-                             filename, app.config['DETECTED_FOLDER'])
-            return redirect("/detection")
+                             filename, 'small', os.path.join(
+                                 app.config['DETECTED_FOLDER'], 'small')+'/')
+            detect_ocr_image(app.config['UPLOAD_FOLDER'] +
+                             filename, 'medium', os.path.join(app.config['DETECTED_FOLDER'], 'medium')+'/')
+            detect_ocr_image(app.config['UPLOAD_FOLDER'] +
+                             filename, 'large', os.path.join(app.config['DETECTED_FOLDER'], 'large') + '/')
+            return redirect("/small")
 
 
-@app.route('/detection')
-def detection():
-    html = '''
-    <!doctype html>
-    <h1>All detection images</h1>
-    '''
+@ app.route('/small')
+def detectionSmall():
     images = []
-    for file in os.listdir(app.config['DETECTED_FOLDER']):
+    for file in os.listdir(app.config['DETECTED_FOLDER'] + '/small/'):
         print(file)
-        images.append(file)
+        images.append('small/' + file)
+        filename = app.config['DETECTED_FOLDER'] + '/small/' + file
+        print(filename)
+        # html += f'<img src="${filename}" alt="image" height="300px" width="500px">'
+    return render_template('small.html', imagelist=images)
+
+
+@ app.route('/medium')
+def detectionMedium():
+    images = []
+    for file in os.listdir(app.config['DETECTED_FOLDER'] + '/medium/'):
+        print(file)
+        images.append('medium/' + file)
         filename = app.config['DETECTED_FOLDER'] + file
         print(filename)
         # html += f'<img src="${filename}" alt="image" height="300px" width="500px">'
-    return render_template('index.html', imagelist=images)
+    return render_template('medium.html', imagelist=images)
+
+
+@ app.route('/large')
+def detectionLarge():
+    images = []
+    for file in os.listdir(app.config['DETECTED_FOLDER'] + '/large'):
+        print(file)
+        images.append('large/' + file)
+        filename = app.config['DETECTED_FOLDER'] + file
+        print(filename)
+        # html += f'<img src="${filename}" alt="image" height="300px" width="500px">'
+    return render_template('large.html', imagelist=images)
 
 
 app.run(host="0.0.0.0")
