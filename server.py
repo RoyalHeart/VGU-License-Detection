@@ -40,7 +40,7 @@ def upload_file():
         <input type=file name=file>
         <input type=submit value=Upload>
         </form>
-        <a href="/detection">View all detected images</a>
+        <a href="/small">View detected images by small model</a>
         '''
         return html
     if request.method == 'POST':
