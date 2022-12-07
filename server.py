@@ -5,7 +5,7 @@
 
 import json
 import os
-from detect_ocr import detect_ocr_image
+from detect_ocr import detect_ocr_image, detect_ocr_realesrgan_image
 from flask import Flask, flash, redirect, url_for, request, render_template
 from werkzeug.utils import secure_filename
 
@@ -41,6 +41,7 @@ def upload_file():
         <input type=submit value=Upload>
         </form>
         <a href="/small">View detected images by small model</a>
+        <a href="/smallRealESRGAN">View detected images by small model with Real ESRGAN</a>
         '''
         return html
     if request.method == 'POST':
@@ -59,13 +60,19 @@ def upload_file():
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            detect_ocr_image(app.config['UPLOAD_FOLDER'] +
-                             filename, 'small', os.path.join(
-                                 app.config['DETECTED_FOLDER'], 'small')+'/')
-            detect_ocr_image(app.config['UPLOAD_FOLDER'] +
-                             filename, 'medium', os.path.join(app.config['DETECTED_FOLDER'], 'medium')+'/')
-            detect_ocr_image(app.config['UPLOAD_FOLDER'] +
-                             filename, 'large', os.path.join(app.config['DETECTED_FOLDER'], 'large') + '/')
+            path = app.config['UPLOAD_FOLDER'] + filename
+            detect_ocr_image(path, 'small', os.path.join(
+                app.config['DETECTED_FOLDER'], 'small')+'/')
+            detect_ocr_image(path, 'medium', os.path.join(
+                app.config['DETECTED_FOLDER'], 'medium')+'/')
+            detect_ocr_image(path, 'large', os.path.join(
+                app.config['DETECTED_FOLDER'], 'large') + '/')
+            detect_ocr_realesrgan_image(path, 'small', os.path.join(
+                app.config['DETECTED_FOLDER'], 'smallRealESRGAN') + '/')
+            detect_ocr_realesrgan_image(path, 'medium', os.path.join(
+                app.config['DETECTED_FOLDER'], 'mediumRealESRGAN') + '/')
+            detect_ocr_realesrgan_image(path, 'large', os.path.join(
+                app.config['DETECTED_FOLDER'], 'largeRealESRGAN') + '/')
             return redirect("/small")
 
 
@@ -81,6 +88,18 @@ def detectionSmall():
     return render_template('small.html', imagelist=images)
 
 
+@ app.route('/smallRealESRGAN')
+def detectionSmallRealESRGAN():
+    images = []
+    for file in os.listdir(app.config['DETECTED_FOLDER'] + '/smallRealESRGAN/'):
+        print(file)
+        images.append('smallRealESRGAN/' + file)
+        filename = app.config['DETECTED_FOLDER'] + '/small/' + file
+        print(filename)
+        # html += f'<img src="${filename}" alt="image" height="300px" width="500px">'
+    return render_template('smallRealESRGAN.html', imagelist=images)
+
+
 @ app.route('/medium')
 def detectionMedium():
     images = []
@@ -93,6 +112,18 @@ def detectionMedium():
     return render_template('medium.html', imagelist=images)
 
 
+@ app.route('/mediumRealESRGAN')
+def detectionMediumRealESRGAN():
+    images = []
+    for file in os.listdir(app.config['DETECTED_FOLDER'] + '/mediumRealESRGAN/'):
+        print(file)
+        images.append('mediumRealESRGAN/' + file)
+        filename = app.config['DETECTED_FOLDER'] + '/mediumRealESRGAN' + file
+        print(filename)
+        # html += f'<img src="${filename}" alt="image" height="300px" width="500px">'
+    return render_template('mediumRealESRGAN.html', imagelist=images)
+
+
 @ app.route('/large')
 def detectionLarge():
     images = []
@@ -103,6 +134,18 @@ def detectionLarge():
         print(filename)
         # html += f'<img src="${filename}" alt="image" height="300px" width="500px">'
     return render_template('large.html', imagelist=images)
+
+
+@ app.route('/largeRealESRGAN')
+def detectionLargeRealESRGAN():
+    images = []
+    for file in os.listdir(app.config['DETECTED_FOLDER'] + '/largeRealESRGAN/'):
+        print(file)
+        images.append('largeRealESRGAN/' + file)
+        filename = app.config['DETECTED_FOLDER'] + '/largeRealESRGAN' + file
+        print(filename)
+        # html += f'<img src="${filename}" alt="image" height="300px" width="500px">'
+    return render_template('largeRealESRGAN.html', imagelist=images)
 
 
 app.run(host="0.0.0.0")

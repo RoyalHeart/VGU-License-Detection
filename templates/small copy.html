@@ -12,8 +12,6 @@
     <div></div>
     <a href="/large">To large model page</a>
     <div></div>
-    <a href="/smallRealESRGAN">To small model with Real ESRGAN</a>
-    <div></div>
     {% for i in imagelist %}
     <img src="{{ url_for('static', filename=i)}} " width="1000">
     {% endfor %}

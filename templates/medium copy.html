@@ -7,12 +7,10 @@
 </head>
 
 <body>
-    <h1>Small model</h1>
-    <a href="/medium">To medium model page</a>
+    <h1>Medium model</h1>
+    <a href="/small">To small model page</a>
     <div></div>
     <a href="/large">To large model page</a>
-    <div></div>
-    <a href="/smallRealESRGAN">To small model with Real ESRGAN</a>
     <div></div>
     {% for i in imagelist %}
     <img src="{{ url_for('static', filename=i)}} " width="1000">

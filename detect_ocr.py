@@ -2,6 +2,7 @@ from module.region_mapping import getRegionNoAccents
 from module.timing import timing
 import module.regular_expression as re
 import module.ocr as ocr
+import module.ocrPytesseract as ocrPytesseract
 import cv2
 import torch
 import os
@@ -102,6 +103,40 @@ def showLicenseRegionOnFrame(results, frame: np.ndarray, filename=None, isShow=T
         cv2.imshow("edited frame", edited_frame)
 
 
+def showLicenseRegionRealESRGANOnFrame(results, frame: np.ndarray, filename, isShow=True):
+    df = results.pandas().xyxy
+    edited_frame = frame
+    if not (df[0].empty):
+        licenses = df[0]
+        for i in range(len(licenses.xmin)):
+            try:
+                ymin = round(float(pd.to_numeric(licenses.ymin[i])))
+                ymax = round(float(pd.to_numeric(licenses.ymax[i])))
+                xmin = round(float(pd.to_numeric(licenses.xmin[i])))
+                xmax = round(float(pd.to_numeric(licenses.xmax[i])))
+                license_crop = frame[ymin:ymax, xmin:xmax]
+                edited_frame = cv2.rectangle(
+                    edited_frame, (xmin, ymin), (xmax, ymax), (36, 255, 12), 1
+                )
+                cropPath = f'./license/licensePlate/{xmin}{ymin}{xmax}{ymax}_{i}.jpg'
+                cv2.imwrite(cropPath, license_crop)
+                os.system(
+                    f'python ./RealESRGAN/inference_realesrgan.py -n RealESRGAN_x4plus -i {cropPath} -o ./license/upscale/ -t 100')
+                ocrResults = ocr.getTextFromImage(
+                    f'./license/upscale/{xmin}{ymin}{xmax}{ymax}_{i}_out.jpg')
+                regionMappingFrame(
+                    ocrResults, edited_frame, xmin, ymin)
+            except:
+                print("Type error")
+    if (filename):
+        print("Save file")
+        print(filename)
+        cv2.imwrite(filename, cv2.cvtColor(
+            edited_frame, cv2.COLOR_BGR2RGB))
+    if (isShow):
+        cv2.imshow("edited frame", edited_frame)
+
+
 def detect_ocr_video(vidcap, modelType='small', frameRate=30):
     success, frame = vidcap.read()
     count = 0
@@ -150,6 +185,27 @@ def detect_ocr_image(pathToImage, modelType: str = 'small', savePath=None):
     showLicenseRegionOnFrame(results, image, filename, False)
 
 
+def detect_ocr_realesrgan_image(pathToImage, modelType: str = 'small', savePath=None):
+    image = cv2.cvtColor(cv2.imread(
+        pathToImage), cv2.COLOR_BGR2RGB)
+    model = modelSmall
+    if (modelType == 'small'):
+        model = modelSmall
+    elif (modelType == 'medium'):
+        model = modelMedium
+    elif (modelType == 'large'):
+        model = modelLarge
+    else:
+        return Exception
+    results = model(image)
+    model.iou = 0.1
+    filename = None
+    if (savePath):
+        filename = f'{savePath}detected_{modelType}_{os.path.basename(pathToImage)}'
+    print(filename)
+    showLicenseRegionRealESRGANOnFrame(results, image, filename, False)
+
+
 def detectLicense(dir):
     imgs = []
     for i in os.listdir(dir):
@@ -162,16 +218,17 @@ def detectLicense(dir):
 def main():
     username = "hoangtam"
     password = "vgulicensedetection"
-    port = "172.16.129.39:8080"
+    port = "172.16.128.210:8080"
     ipCameraAddress = f"https://{username}:{password}@{port}/video"
     video_path = "./OUTFILE.mp4"
     # vidcap = cv2.VideoCapture(ipCameraAddress)
-    vidcap = cv2.VideoCapture(video_path)
+    # vidcap = cv2.VideoCapture(video_path)
     # vidcap = cv2.VideoCapture(0)
     # timing(detectLicense, "./license/test/")
-    print('hi')
-    # detect_ocr_video(vidcap, 'medium', 10)
-    detect_ocr_image("./upload_file/03.jpg", 'medium', './static/medium/')
+    # detect_ocr_video(vidcap, 'medium', 30)
+    # detect_ocr_image("./upload_file/03.jpg", 'medium', './static/medium/')
+    detect_ocr_realesrgan_image(
+        "./upload_file/03.jpg", 'small', './static/smallRealESRGAN/')
     # Exit and distroy all windows
     cv2.destroyAllWindows()
 
